@@ -1,0 +1,93 @@
+<%- include('component/header') %>
+
+<div class="container">
+    <div class="card" style="display: inline-block; padding: 1% 2%; margin-bottom: 5%;">
+        <h1>Control Panel</h1>
+        <button class="btn btn-danger" onclick=" location.href = '/logout';">Log Out</button>
+    </div>
+
+    <%- include('component/send_email') %>
+
+    <table id="records" class=" display">
+        <caption>Suscribers</caption>
+        <thead>
+
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">FName</th>
+                <th scope="col">LName</th>
+                <th scope="col">Email</th>
+                <th scope="col">CreatedOn</th>
+                <th scope="col">LastUpdated</th>
+                <th scope="col"></th>
+            </tr>
+        </thead>
+        <tbody>
+            <%if (records.length > 0){ %>
+            <% records.forEach(function(row, index){ %>
+            <tr>
+                <td><%= index+1 %></td>
+                <td><%= row.fName %></td>
+                <td><%= row.lName %></td>
+                <td><%= row.email %></td>
+                <td><%= row.createdOn.toLocaleDateString() %></td>
+                <td><%= row.lastUpdatedOn.toLocaleDateString() %></td>
+                <td>
+                    <button class="delete-button" id="<%= row._id %>">
+                        Delete
+                    </button>
+                </td>
+            </tr>
+            <% })}else{ %>
+            <tr>
+                <td colspan="6">No Record Found</td>
+            </tr>
+            <% } %>
+        </tbody>
+    </table>
+
+
+</div>
+
+
+<!-- For Data Table -->
+<script>
+    $.extend(true, $.fn.dataTable.defaults, {
+        "searching": true,
+        "ordering": true
+    });
+
+
+
+    $(document).ready(function () {
+        
+
+        var table = $('#records').DataTable();
+        $('#records tbody').on('click', '.delete-button', function () {
+            var id = $(this).attr("id");
+            const row = table
+                .row($(this).parents('tr'));
+            // alert('ID value:' + id + "\n" + "index:" + "index");
+
+            $.post("/delete",
+                {
+                    id: id,
+                },
+                function (data, status) {
+                    if (status == 'success') {
+                        row.remove().draw();
+                    }
+                    alert("Request: " + status);
+                });
+        });
+
+
+    });
+
+
+
+
+
+</script>
+
+<%- include('component/footer') %>

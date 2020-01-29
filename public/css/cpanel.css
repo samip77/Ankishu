@@ -1,0 +1,11 @@
+#send-email{
+    display: block;
+    text-align: left;
+}
+
+#send-email input {
+    vertical-align: top;
+    margin: 0% 2% 0 0 ;
+   
+}
+
