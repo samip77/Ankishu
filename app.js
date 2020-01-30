@@ -9,7 +9,8 @@ const nodemailer = require("nodemailer");
 
 const session = require("express-session");
 const passport = require("passport");
-LocalStrategy = require('passport-local').Strategy;
+const LocalStrategy = require('passport-local').Strategy;
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
 //models
 const User = require('./models/user');
@@ -30,7 +31,7 @@ app.use(session({
   secret: 'keyboard cat',
   resave: false,
   saveUninitialized: false,
-  
+
 }))
 
 //Passport config
@@ -39,15 +40,35 @@ app.use(passport.session());
 
 passport.use(User.createStrategy());
 
-passport.serializeUser(function(user, done) {
+passport.use(new GoogleStrategy({
+  clientID: process.env.GOOGLE_CLIENT_ID,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  callbackURL: "http://localhost:3000/auth/google/cpanel"
+},
+
+  function (accessToken, refreshToken, profile, cb) {
+    const email = profile._json.email;
+    if (email == process.env.EMAIL_ID) {
+      User.findOrCreate({ googleId: profile.id }, function (err, user) {
+        return cb(err, user);
+      });
+    } else {
+      cb("Only Admin can sign in.", null);
+    }
+  }
+));
+
+passport.serializeUser(function (user, done) {
   done(null, user.id);
 });
 
-passport.deserializeUser(function(id, done) {
-  User.findById(id, function(err, user) {
+passport.deserializeUser(function (id, done) {
+  User.findById(id, function (err, user) {
     done(err, user);
   });
 });
+
+
 
 //Set up default mongoose connection
 mongoose.connect('mongodb://localhost:27017/mydatabase', { useNewUrlParser: true, useUnifiedTopology: true });
@@ -117,15 +138,15 @@ app.get("/unsubscribe", function (req, res) {
   res.render(__dirname + "/views/unsubscribe.ejs");
 });
 
-app.post("/unsubscribe", function(req,res){
+app.post("/unsubscribe", function (req, res) {
   const email = req.body.email;
-  Subscriber.findByIdAndRemove( {email: email},
-    function(err, data){
-      if(err){
+  Subscriber.findByIdAndRemove({ email: email },
+    function (err, data) {
+      if (err) {
         return res.render(__dirname + "/views/failure.ejs", { msg: "Given email doesn't exist in our database" });
       }
       return res.render(__dirname + "/views/success.ejs", { msg: "You are now unsubscribed." });
-  });
+    });
 
 
 });
@@ -144,15 +165,13 @@ app.post("/login", function (req, res) {
     if (err) {
       console.log(err);
     } else {
-      
-      passport.authenticate("local")(req, res, function(){
+
+      passport.authenticate("local")(req, res, function () {
         res.redirect("/cpanel");
       });
     }
 
   });
-
-
 })
 
 app.post("/register", function (req, res) {
@@ -168,6 +187,16 @@ app.post("/register", function (req, res) {
   });
 })
 
+app.get('/auth/google',
+  passport.authenticate('google', { scope: ['profile', 'email'] }));
+
+app.get('/auth/google/cpanel',
+  passport.authenticate('google', { failureRedirect: '/login' }),
+  function (req, res) {
+    // Successful authentication, redirect home.
+    res.redirect('/cpanel');
+  });
+
 app.get('/logout', function (req, res) {
   req.logout();
   res.redirect('/login');
@@ -175,7 +204,7 @@ app.get('/logout', function (req, res) {
 
 
 app.get("/cpanel", function (req, res) {
-   console.log(req.isAuthenticated(true));
+  console.log(req.isAuthenticated(true));
   if (req.isAuthenticated(true)) {
     Subscriber.find(function (err, data) {
       if (err) {
