@@ -68,10 +68,10 @@ passport.deserializeUser(function (id, done) {
   });
 });
 
-
-
 //Set up default mongoose connection
-mongoose.connect('mongodb://localhost:27017/mydatabase', { useNewUrlParser: true, useUnifiedTopology: true });
+const mongoUri = process.env.MONGO_URI;
+mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true, autoIndex:false });
+// mongoose.connect('mongodb://localhost:27017/mydatabase', { useNewUrlParser: true, useUnifiedTopology: true });
 
 //Get the default connection
 var db = mongoose.connection;
@@ -82,6 +82,9 @@ db.on('error', console.error.bind(console, 'connection error:'));
 db.once('open', function () {
   // we're connected to database!
 });
+
+
+
 
 app.get("/", function (req, res) {
   res.redirect("/subscribe");
@@ -287,6 +290,7 @@ app.post("/send_email", function (req, res) {
   });
 });
 
-app.listen(process.env.PORT || 3000, function () {
-  console.log("Server running at port");
+const port = process.env.PORT || 3000 ;
+app.listen(port, function () {
+  console.log("Server running at port:" + port);
 });
