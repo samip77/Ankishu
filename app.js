@@ -43,7 +43,7 @@ passport.use(User.createStrategy());
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: "http://localhost:3000/auth/google/cpanel"
+  callbackURL: "https://ankishu.herokuapp.com/auth/google/cpanel"
 },
 
   function (accessToken, refreshToken, profile, cb) {
@@ -83,9 +83,6 @@ db.once('open', function () {
   // we're connected to database!
 });
 
-
-
-
 app.get("/", function (req, res) {
   res.redirect("/subscribe");
 });
@@ -93,8 +90,6 @@ app.get("/", function (req, res) {
 app.get("/subscribe", function (req, res) {
   res.render(__dirname + "/views/subscribe.ejs");
 });
-
-
 
 app.post("/subscribe", function (req, res) {
 
